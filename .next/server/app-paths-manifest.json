@@ -1,0 +1,17 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/(auth)/sign-in/page": "app/(auth)/sign-in/page.js",
+  "/(auth)/sign-up/page": "app/(auth)/sign-up/page.js",
+  "/api/forms/[id]/questions/[qid]/route": "app/api/forms/[id]/questions/[qid]/route.js",
+  "/api/forms/[id]/questions/route": "app/api/forms/[id]/questions/route.js",
+  "/api/forms/[id]/responses/route": "app/api/forms/[id]/responses/route.js",
+  "/api/forms/[id]/route": "app/api/forms/[id]/route.js",
+  "/api/upload/route": "app/api/upload/route.js",
+  "/api/forms/route": "app/api/forms/route.js",
+  "/forms/[id]/page": "app/forms/[id]/page.js",
+  "/page": "app/page.js",
+  "/(dashboard)/forms/[id]/edit/page": "app/(dashboard)/forms/[id]/edit/page.js",
+  "/(dashboard)/forms/[id]/responses/page": "app/(dashboard)/forms/[id]/responses/page.js",
+  "/(dashboard)/page": "app/(dashboard)/page.js",
+  "/(dashboard)/forms/new/page": "app/(dashboard)/forms/new/page.js"
+}
