@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
 
 export async function POST(
@@ -15,7 +15,7 @@ export async function POST(
 
   try {
     // Verify form ownership
-    const { data: form, error: formError } = await supabase
+    const { data: form, error: formError } = await supabaseServer
       .from('forms')
       .select('user_id')
       .eq('id', formId)
@@ -36,7 +36,7 @@ export async function POST(
     }
 
     // Get the next order index
-    const { data: lastQuestion } = await supabase
+    const { data: lastQuestion } = await supabaseServer
       .from('questions')
       .select('order_index')
       .eq('form_id', formId)
@@ -47,7 +47,7 @@ export async function POST(
       ? lastQuestion[0].order_index + 1
       : 0;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from('questions')
       .insert({
         form_id: formId,

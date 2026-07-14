@@ -3,7 +3,6 @@
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 
 export default function NewFormPage() {
   const { user } = useUser();
@@ -17,26 +16,14 @@ export default function NewFormPage() {
     setLoading(true);
 
     try {
-      // First, ensure user exists in our users table
-      await supabase.from('users').upsert({
-        clerk_id: user.id,
-        email: user.emailAddresses[0]?.emailAddress,
-        name: user.firstName + ' ' + user.lastName,
+      const res = await fetch('/api/forms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description }),
       });
 
-      // Create the form
-      const { data, error } = await supabase
-        .from('forms')
-        .insert({
-          title,
-          description,
-          is_published: false,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
+      if (!res.ok) throw new Error('Failed to create form');
+      const data = await res.json();
       router.push(`/forms/${data.id}/edit`);
     } catch (error) {
       console.error('Failed to create form:', error);

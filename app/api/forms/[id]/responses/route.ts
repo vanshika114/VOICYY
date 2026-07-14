@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
 
 export async function GET(
@@ -15,7 +15,7 @@ export async function GET(
 
   try {
     // Verify form ownership
-    const { data: form, error: formError } = await supabase
+    const { data: form, error: formError } = await supabaseServer
       .from('forms')
       .select('user_id')
       .eq('id', formId)
@@ -26,7 +26,7 @@ export async function GET(
     }
 
     // Get responses
-    const { data: responses, error: responsesError } = await supabase
+    const { data: responses, error: responsesError } = await supabaseServer
       .from('responses')
       .select('*')
       .eq('form_id', formId)
@@ -37,7 +37,7 @@ export async function GET(
     // Get answers for each response
     const responsesWithAnswers = await Promise.all(
       (responses || []).map(async (response) => {
-        const { data: answers } = await supabase
+        const { data: answers } = await supabaseServer
           .from('answers')
           .select('*')
           .eq('response_id', response.id)
@@ -68,7 +68,7 @@ export async function POST(
 
   try {
     // Verify form is published
-    const { data: form, error: formError } = await supabase
+    const { data: form, error: formError } = await supabaseServer
       .from('forms')
       .select('is_published')
       .eq('id', formId)
@@ -92,7 +92,7 @@ export async function POST(
     }
 
     // Create response
-    const { data: response, error: responseError } = await supabase
+    const { data: response, error: responseError } = await supabaseServer
       .from('responses')
       .insert({ form_id: formId })
       .select()
@@ -110,7 +110,7 @@ export async function POST(
       duration_seconds: answer.duration_seconds || null,
     }));
 
-    const { error: answersError } = await supabase
+    const { error: answersError } = await supabaseServer
       .from('answers')
       .insert(answersToInsert);
 

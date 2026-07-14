@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
 
 export async function GET(
@@ -9,7 +9,7 @@ export async function GET(
   const { id } = params;
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from('forms')
       .select('*')
       .eq('id', id)
@@ -50,7 +50,7 @@ export async function PATCH(
 
   try {
     // Verify ownership
-    const { data: form, error: fetchError } = await supabase
+    const { data: form, error: fetchError } = await supabaseServer
       .from('forms')
       .select('user_id')
       .eq('id', id)
@@ -63,7 +63,7 @@ export async function PATCH(
     const body = await request.json();
     const { title, description, is_published } = body;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from('forms')
       .update({
         ...(title && { title }),
@@ -100,7 +100,7 @@ export async function DELETE(
 
   try {
     // Verify ownership
-    const { data: form, error: fetchError } = await supabase
+    const { data: form, error: fetchError } = await supabaseServer
       .from('forms')
       .select('user_id')
       .eq('id', id)
@@ -110,7 +110,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseServer
       .from('forms')
       .delete()
       .eq('id', id);

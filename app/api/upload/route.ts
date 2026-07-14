@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const fileName = `${formId}/${timestamp}.webm`;
 
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { data, error } = await supabaseServer.storage
       .from('voiceforms-audio')
       .upload(fileName, uint8Array, {
         contentType: 'audio/webm',
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     }
 
     // Get public URL
-    const { data: publicUrlData } = supabase.storage
+    const { data: publicUrlData } = supabaseServer.storage
       .from('voiceforms-audio')
       .getPublicUrl(fileName);
 

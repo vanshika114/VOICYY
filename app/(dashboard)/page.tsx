@@ -1,36 +1,34 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 
 interface Form {
   id: string;
   title: string;
   created_at: string;
   is_published: boolean;
-  response_count?: number;
 }
 
 export default function FormsPage() {
-  const { user } = useUser();
   const [forms, setForms] = useState<Form[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
     fetchForms();
-  }, [user]);
+  }, []);
 
   const fetchForms = async () => {
     try {
-      const { data, error } = await supabase
-        .from('forms')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const res = await fetch('/api/forms', { credentials: 'include' });
+      console.log('Fetch response status:', res.status);
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error('API error:', errorData);
+        throw new Error(`Failed to fetch forms: ${res.status}`);
+      }
+      const data = await res.json();
+      console.log('Forms data:', data);
       setForms(data || []);
     } catch (error) {
       console.error('Failed to fetch forms:', error);
@@ -43,12 +41,11 @@ export default function FormsPage() {
     if (!confirm('Delete this form? This cannot be undone.')) return;
 
     try {
-      const { error } = await supabase
-        .from('forms')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      const res = await fetch(`/api/forms/${id}`, { 
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Failed to delete');
       setForms(forms.filter(f => f.id !== id));
     } catch (error) {
       console.error('Failed to delete form:', error);

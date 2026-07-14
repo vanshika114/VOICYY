@@ -1,16 +1,18 @@
 import { auth } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const { userId } = auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
-    const { data, error } = await supabase
+    const { userId } = auth();
+
+    console.log('Clerk userId:', userId);
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized - No userId from Clerk' }, { status: 401 });
+    }
+
+    const { data, error } = await supabaseServer
       .from('forms')
       .select('*')
       .eq('user_id', userId)
@@ -29,13 +31,15 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { userId } = auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
+    const { userId } = auth();
+
+    console.log('Clerk userId (POST):', userId);
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized - No userId from Clerk' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { title, description } = body;
 
@@ -46,7 +50,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from('forms')
       .insert({
         title,

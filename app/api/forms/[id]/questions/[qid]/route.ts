@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
 
 export async function PATCH(
@@ -15,7 +15,7 @@ export async function PATCH(
 
   try {
     // Verify form ownership
-    const { data: form, error: formError } = await supabase
+    const { data: form, error: formError } = await supabaseServer
       .from('forms')
       .select('user_id')
       .eq('id', formId)
@@ -34,7 +34,7 @@ export async function PATCH(
     if (is_required !== undefined) updateData.is_required = is_required;
     if (order_index !== undefined) updateData.order_index = order_index;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from('questions')
       .update(updateData)
       .eq('id', questionId)
@@ -74,7 +74,7 @@ export async function DELETE(
 
   try {
     // Verify form ownership
-    const { data: form, error: formError } = await supabase
+    const { data: form, error: formError } = await supabaseServer
       .from('forms')
       .select('user_id')
       .eq('id', formId)
@@ -84,7 +84,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseServer
       .from('questions')
       .delete()
       .eq('id', questionId)
