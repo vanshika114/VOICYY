@@ -3,7 +3,6 @@
 import { useUser } from '@clerk/nextjs';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 
 interface Question {
   id: string;
@@ -39,22 +38,14 @@ export default function FormEditorPage() {
 
   const fetchForm = async () => {
     try {
-      const { data: formData, error: formError } = await supabase
-        .from('forms')
-        .select('*')
-        .eq('id', formId)
-        .single();
-
-      if (formError) throw formError;
+      const formRes = await fetch(`/api/forms/${formId}`);
+      if (!formRes.ok) throw new Error('Failed to fetch form');
+      const formData = await formRes.json();
       setForm(formData);
 
-      const { data: questionsData, error: questionsError } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('form_id', formId)
-        .order('order_index', { ascending: true });
-
-      if (questionsError) throw questionsError;
+      const questionsRes = await fetch(`/api/forms/${formId}/questions`);
+      if (!questionsRes.ok) throw new Error('Failed to fetch questions');
+      const questionsData = await questionsRes.json();
       setQuestions(questionsData || []);
     } catch (error) {
       console.error('Failed to fetch form:', error);
@@ -67,12 +58,13 @@ export default function FormEditorPage() {
   const updateForm = async (updates: Partial<Form>) => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('forms')
-        .update(updates)
-        .eq('id', formId);
+      const res = await fetch(`/api/forms/${formId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
 
-      if (error) throw error;
+      if (!res.ok) throw new Error('Failed to update form');
       setForm({ ...form, ...updates } as Form);
     } catch (error) {
       console.error('Failed to update form:', error);
@@ -83,22 +75,19 @@ export default function FormEditorPage() {
   };
 
   const addQuestion = async () => {
-    const newIndex = Math.max(...questions.map(q => q.order_index), -1) + 1;
-
     try {
-      const { data, error } = await supabase
-        .from('questions')
-        .insert({
-          form_id: formId,
+      const res = await fetch(`/api/forms/${formId}/questions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           text: 'New question',
           type: 'voice',
           is_required: false,
-          order_index: newIndex,
-        })
-        .select()
-        .single();
+        }),
+      });
 
-      if (error) throw error;
+      if (!res.ok) throw new Error('Failed to add question');
+      const data = await res.json();
       setQuestions([...questions, data]);
     } catch (error) {
       console.error('Failed to add question:', error);
@@ -108,12 +97,13 @@ export default function FormEditorPage() {
 
   const updateQuestion = async (qId: string, updates: Partial<Question>) => {
     try {
-      const { error } = await supabase
-        .from('questions')
-        .update(updates)
-        .eq('id', qId);
+      const res = await fetch(`/api/forms/${formId}/questions/${qId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
 
-      if (error) throw error;
+      if (!res.ok) throw new Error('Failed to update question');
       setQuestions(
         questions.map(q => (q.id === qId ? { ...q, ...updates } : q))
       );
@@ -127,12 +117,11 @@ export default function FormEditorPage() {
     if (!confirm('Delete this question?')) return;
 
     try {
-      const { error } = await supabase
-        .from('questions')
-        .delete()
-        .eq('id', qId);
+      const res = await fetch(`/api/forms/${formId}/questions/${qId}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      if (!res.ok) throw new Error('Failed to delete question');
       setQuestions(questions.filter(q => q.id !== qId));
     } catch (error) {
       console.error('Failed to delete question:', error);
@@ -152,11 +141,19 @@ export default function FormEditorPage() {
 
     setQuestions(newQuestions);
 
-    for (const q of newQuestions) {
-      await supabase
-        .from('questions')
-        .update({ order_index: newQuestions.indexOf(q) })
-        .eq('id', q.id);
+    try {
+      await Promise.all(
+        newQuestions.map((q, idx) =>
+          fetch(`/api/forms/${formId}/questions/${q.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_index: idx }),
+          })
+        )
+      );
+    } catch (error) {
+      console.error('Failed to reorder questions:', error);
+      alert('Failed to save new order');
     }
   };
 
