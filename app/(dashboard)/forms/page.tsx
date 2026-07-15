@@ -4,6 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 interface Form {
   id: string;
@@ -40,7 +41,20 @@ export default function FormsPage() {
   };
 
   const deleteForm = async (id: string) => {
-    if (!confirm('Delete this form? This cannot be undone.')) return;
+    const confirmed = await new Promise<boolean>((resolve) => {
+      toast('Delete this form? This cannot be undone.', {
+        action: {
+          label: 'Delete',
+          onClick: () => resolve(true),
+        },
+        cancel: {
+          label: 'Cancel',
+          onClick: () => resolve(false),
+        },
+      });
+    });
+
+    if (!confirmed) return;
 
     try {
       const { error } = await supabase
@@ -52,7 +66,7 @@ export default function FormsPage() {
       setForms(forms.filter(f => f.id !== id));
     } catch (error) {
       console.error('Failed to delete form:', error);
-      alert('Failed to delete form');
+      toast.error('Failed to delete form');
     }
   };
 

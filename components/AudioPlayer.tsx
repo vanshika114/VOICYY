@@ -53,26 +53,26 @@ export function AudioPlayer({ url, durationSeconds }: AudioPlayerProps) {
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-3">
+    <div className="space-y-3">
+      <div className="flex items-center gap-4">
         <button
           onClick={handlePlayPause}
-          className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center"
+          className="flex-shrink-0 w-12 h-12 rounded-full bg-primary-600 text-white hover:bg-primary-700 flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-fast focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         >
           {isPlaying ? '⏸' : '▶'}
         </button>
 
-        <div className="flex-1 space-y-1">
+        <div className="flex-1 space-y-2">
           <div
             onClick={handleProgressClick}
-            className="w-full h-1 bg-gray-300 rounded-full cursor-pointer hover:h-1.5 transition"
+            className="w-full h-2 bg-neutral-200 rounded-full cursor-pointer hover:h-2.5 transition-all duration-fast"
           >
             <div
-              className="h-full bg-blue-600 rounded-full"
+              className="h-full bg-primary-600 rounded-full transition-all duration-fast"
               style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
             />
           </div>
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex justify-between text-xs text-neutral-500 font-medium">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>

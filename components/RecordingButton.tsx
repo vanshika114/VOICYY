@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface RecordingButtonProps {
   onRecordingComplete: (blob: Blob, duration: number) => void;
@@ -50,7 +51,7 @@ export function RecordingButton({
       }, 1000);
     } catch (error) {
       console.error('Microphone access denied:', error);
-      alert('Microphone access denied. Check your browser settings.');
+      toast.error('Microphone access denied. Check your browser settings.');
     }
   };
 
@@ -66,16 +67,19 @@ export function RecordingButton({
     <button
       onClick={isRecording ? handleStop : handleStart}
       disabled={disabled}
-      className={`w-32 h-32 rounded-full flex flex-col items-center justify-center text-white font-medium transition ${
+      className={`w-36 h-36 rounded-full flex flex-col items-center justify-center text-white font-semibold transition-all duration-fast ${
         isRecording
-          ? 'bg-red-600 hover:bg-red-700'
-          : 'bg-blue-600 hover:bg-blue-700'
-      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          ? 'bg-gradient-to-br from-danger-500 to-danger-600 shadow-xl hover:shadow-2xl hover:scale-105 focus:ring-2 focus:ring-danger-500 focus:ring-offset-2'
+          : 'bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg hover:shadow-xl hover:scale-105 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2'
+      } ${disabled ? 'opacity-50 cursor-not-allowed hover:scale-100' : ''} relative overflow-hidden`}
     >
-      <div className="text-3xl mb-2">🎤</div>
-      <div className="text-sm">
+      <div className="text-4xl mb-2 relative z-10">🎤</div>
+      <div className="text-base font-semibold relative z-10">
         {isRecording ? `${duration}s` : 'Record'}
       </div>
+      {isRecording && (
+        <div className="absolute inset-0 bg-white/10 animate-pulse" />
+      )}
     </button>
   );
 }

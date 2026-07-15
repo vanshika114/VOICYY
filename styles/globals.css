@@ -30,6 +30,110 @@ select {
   font: inherit;
 }
 
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.4s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Base styles */
+@layer base {
+  * {
+    @apply border-neutral-200;
+  }
+  
+  body {
+    @apply bg-white text-neutral-900 antialiased;
+  }
+}
+
 /* Utility classes */
 .container {
   max-width: 1200px;
@@ -37,59 +141,68 @@ select {
   padding: 0 1rem;
 }
 
-.btn {
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  border: none;
-  font-weight: 500;
-  transition: all 0.2s;
+/* Button styles */
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-fast;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 shadow-sm hover:shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border border-neutral-300;
+  }
+  
+  .btn-danger {
+    @apply bg-danger-600 text-white hover:bg-danger-700 shadow-sm hover:shadow-md;
+  }
+  
+  .btn-ghost {
+    @apply bg-transparent text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900;
+  }
 }
 
-.btn-primary {
-  background-color: #185fa5;
-  color: white;
+/* Card styles */
+@layer components {
+  .card {
+    @apply bg-white border border-neutral-200 rounded-xl p-6 shadow-sm;
+  }
+  
+  .card-hover {
+    @apply card hover:shadow-md hover:border-neutral-300 transition-all duration-fast;
+  }
 }
 
-.btn-primary:hover {
-  background-color: #0d3d6b;
+/* Input styles */
+@layer components {
+  .input {
+    @apply w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply transition-all duration-fast;
+  }
+  
+  .input-textarea {
+    @apply input resize-none;
+  }
 }
 
-.btn-secondary {
-  background-color: #f1efe8;
-  color: #2c2c2a;
-  border: 0.5px solid #d3d1c7;
-}
-
-.btn-secondary:hover {
-  background-color: #e0dfd4;
-}
-
-.btn-danger {
-  background-color: #a32d2d;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #7a2020;
-}
-
-.card {
-  background: white;
-  border: 0.5px solid #d3d1c7;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-}
-
-.input {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 0.5px solid #d3d1c7;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.input:focus {
-  outline: none;
-  border-color: #185fa5;
-  box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.1);
+/* Badge styles */
+@layer components {
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-success {
+    @apply badge bg-success-100 text-success-700;
+  }
+  
+  .badge-neutral {
+    @apply badge bg-neutral-100 text-neutral-700;
+  }
+  
+  .badge-primary {
+    @apply badge bg-primary-100 text-primary-700;
+  }
 }

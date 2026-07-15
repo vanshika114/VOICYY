@@ -3,6 +3,7 @@
 import { useUser } from '@clerk/nextjs';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface Question {
   id: string;
@@ -68,7 +69,7 @@ export default function FormEditorPage() {
       setForm({ ...form, ...updates } as Form);
     } catch (error) {
       console.error('Failed to update form:', error);
-      alert('Failed to save');
+      toast.error('Failed to save');
     } finally {
       setSaving(false);
     }
@@ -91,7 +92,7 @@ export default function FormEditorPage() {
       setQuestions([...questions, data]);
     } catch (error) {
       console.error('Failed to add question:', error);
-      alert('Failed to add question');
+      toast.error('Failed to add question');
     }
   };
 
@@ -109,12 +110,25 @@ export default function FormEditorPage() {
       );
     } catch (error) {
       console.error('Failed to update question:', error);
-      alert('Failed to save');
+      toast.error('Failed to save');
     }
   };
 
   const deleteQuestion = async (qId: string) => {
-    if (!confirm('Delete this question?')) return;
+    const confirmed = await new Promise<boolean>((resolve) => {
+      toast('Delete this question?', {
+        action: {
+          label: 'Delete',
+          onClick: () => resolve(true),
+        },
+        cancel: {
+          label: 'Cancel',
+          onClick: () => resolve(false),
+        },
+      });
+    });
+
+    if (!confirmed) return;
 
     try {
       const res = await fetch(`/api/forms/${formId}/questions/${qId}`, {
@@ -125,7 +139,7 @@ export default function FormEditorPage() {
       setQuestions(questions.filter(q => q.id !== qId));
     } catch (error) {
       console.error('Failed to delete question:', error);
-      alert('Failed to delete');
+      toast.error('Failed to delete');
     }
   };
 
@@ -153,13 +167,13 @@ export default function FormEditorPage() {
       );
     } catch (error) {
       console.error('Failed to reorder questions:', error);
-      alert('Failed to save new order');
+      toast.error('Failed to save new order');
     }
   };
 
   const publishForm = async () => {
     if (questions.length === 0) {
-      alert('Add at least one question before publishing');
+      toast.error('Add at least one question before publishing');
       return;
     }
 
@@ -170,129 +184,207 @@ export default function FormEditorPage() {
     const url = `${window.location.origin}/forms/${formId}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
+    toast.success('Link copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
   };
 
   if (loading || !form) {
-    return <div className="text-center py-12">Loading...</div>;
+    return (
+      <div className="max-w-3xl mx-auto px-6 py-8">
+        <div className="mb-10">
+          <div className="flex items-start gap-6">
+            <div className="flex-1">
+              <div className="h-10 w-2/3 skeleton rounded-lg mb-3"></div>
+              <div className="h-6 w-full skeleton rounded-lg"></div>
+            </div>
+            <div className="flex-shrink-0 pt-1">
+              <div className="h-10 w-32 skeleton rounded-lg"></div>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white p-5 rounded-xl border border-neutral-200">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 flex flex-col gap-1 pt-1">
+                  <div className="w-6 h-6 skeleton rounded"></div>
+                  <div className="w-6 h-6 skeleton rounded"></div>
+                </div>
+                <div className="flex-1">
+                  <div className="h-6 w-3/4 skeleton rounded-lg mb-4"></div>
+                  <div className="flex items-center gap-6 mt-4">
+                    <div className="h-8 w-20 skeleton rounded-lg"></div>
+                    <div className="h-8 w-24 skeleton rounded-lg"></div>
+                    <div className="ml-auto h-8 w-16 skeleton rounded-lg"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div>
+    <div className="max-w-3xl mx-auto px-6 py-8">
       {/* Header */}
-      <div className="flex justify-between items-start mb-8">
-        <div className="flex-1">
-          <input
-            type="text"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            onBlur={() => updateForm({ title: form.title })}
-            className="text-3xl font-bold text-gray-900 bg-transparent border-none p-0 focus:outline-none mb-2 w-full"
-          />
-          <textarea
-            value={form.description}
-            onChange={(e) =>
-              setForm({ ...form, description: e.target.value })
-            }
-            onBlur={() => updateForm({ description: form.description })}
-            placeholder="Form description..."
-            className="input"
-            rows={2}
-          />
-        </div>
+      <div className="mb-10">
+        <div className="flex items-start gap-6">
+          <div className="flex-1">
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              onBlur={() => updateForm({ title: form.title })}
+              className="text-3xl font-bold text-neutral-900 bg-transparent border-none p-0 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg mb-3 w-full tracking-tight placeholder-neutral-300 transition-all duration-fast"
+              placeholder="Form title"
+            />
+            <textarea
+              value={form.description}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+              onBlur={() => updateForm({ description: form.description })}
+              placeholder="Add a description..."
+              className="w-full text-neutral-600 bg-transparent border-none p-0 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg resize-none placeholder-neutral-400 text-base transition-all duration-fast"
+              rows={2}
+            />
+          </div>
 
-        <div className="ml-4 space-y-2">
-          {form.is_published ? (
-            <>
+          <div className="flex-shrink-0 pt-1">
+            {form.is_published ? (
+              <div className="flex flex-col items-end gap-2">
+                <button
+                  onClick={copyLink}
+                  className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2.5 rounded-lg hover:bg-emerald-100 font-medium text-sm transition-all duration-200 border border-emerald-200"
+                >
+                  {copied ? (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Copy Link
+                    </>
+                  )}
+                </button>
+                <span className="text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-1 rounded">Published</span>
+              </div>
+            ) : (
               <button
-                onClick={copyLink}
-                className="block w-full bg-green-50 text-green-700 px-4 py-2 rounded hover:bg-green-100 font-medium text-sm"
+                onClick={publishForm}
+                disabled={saving}
+                className="flex items-center gap-2 bg-neutral-900 text-white px-5 py-2.5 rounded-lg hover:bg-neutral-800 font-medium text-sm disabled:bg-neutral-300 disabled:cursor-not-allowed transition-all duration-fast"
               >
-                {copied ? '✓ Copied' : 'Copy Link'}
+                {saving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Publishing...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Publish
+                  </>
+                )}
               </button>
-              <p className="text-xs text-gray-500">Published</p>
-            </>
-          ) : (
-            <button
-              onClick={publishForm}
-              disabled={saving}
-              className="block w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium text-sm disabled:bg-gray-400"
-            >
-              {saving ? 'Publishing...' : 'Publish'}
-            </button>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       {/* Questions */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {questions.map((q, idx) => (
           <div
             key={q.id}
-            className="bg-white p-6 rounded-lg border border-gray-200"
+            className="bg-white p-5 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:shadow-md transition-all duration-fast"
           >
-            <textarea
-              value={q.text}
-              onChange={(e) =>
-                setQuestions(
-                  questions.map(x =>
-                    x.id === q.id ? { ...x, text: e.target.value } : x
-                  )
-                )
-              }
-              onBlur={() => updateQuestion(q.id, { text: q.text })}
-              className="input text-lg font-semibold mb-4 p-0 border-none focus:outline-none focus:ring-0"
-            />
-
-            <div className="flex gap-4 mb-4">
-              <div>
-                <label className="text-sm text-gray-600">Type</label>
-                <select
-                  value={q.type}
-                  onChange={(e) =>
-                    updateQuestion(q.id, { type: e.target.value as 'voice' | 'text' })
-                  }
-                  className="input mt-1"
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 flex flex-col gap-1 pt-1">
+                <button
+                  onClick={() => moveQuestion(idx, 'up')}
+                  disabled={idx === 0}
+                  className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-400 transition-all duration-fast hover:shadow-sm"
+                  title="Move up"
                 >
-                  <option value="voice">Voice</option>
-                  <option value="text">Text</option>
-                </select>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => moveQuestion(idx, 'down')}
+                  disabled={idx === questions.length - 1}
+                  className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-400 transition-all duration-fast hover:shadow-sm"
+                  title="Move down"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
               </div>
 
-              <label className="flex items-end gap-2">
-                <input
-                  type="checkbox"
-                  checked={q.is_required}
+              <div className="flex-1">
+                <textarea
+                  value={q.text}
                   onChange={(e) =>
-                    updateQuestion(q.id, { is_required: e.target.checked })
+                    setQuestions(
+                      questions.map(x =>
+                        x.id === q.id ? { ...x, text: e.target.value } : x
+                      )
+                    )
                   }
-                  className="w-4 h-4"
+                  onBlur={() => updateQuestion(q.id, { text: q.text })}
+                  className="w-full text-base font-semibold text-neutral-900 bg-transparent border-none p-0 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg resize-none placeholder-neutral-400 transition-all duration-fast"
+                  rows={2}
+                  placeholder="Enter your question"
                 />
-                <span className="text-sm text-gray-700">Required</span>
-              </label>
-            </div>
 
-            <div className="flex gap-2 pt-4 border-t">
-              <button
-                onClick={() => moveQuestion(idx, 'up')}
-                disabled={idx === 0}
-                className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                ↑
-              </button>
-              <button
-                onClick={() => moveQuestion(idx, 'down')}
-                disabled={idx === questions.length - 1}
-                className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                ↓
-              </button>
-              <button
-                onClick={() => deleteQuestion(q.id)}
-                className="px-3 py-1 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100"
-              >
-                Delete
-              </button>
+                <div className="flex items-center gap-6 mt-4">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Type</label>
+                    <select
+                      value={q.type}
+                      onChange={(e) =>
+                        updateQuestion(q.id, { type: e.target.value as 'voice' | 'text' })
+                      }
+                      className="text-sm font-medium text-neutral-700 bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-fast"
+                    >
+                      <option value="voice">Voice</option>
+                      <option value="text">Text</option>
+                    </select>
+                  </div>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={q.is_required}
+                      onChange={(e) =>
+                        updateQuestion(q.id, { is_required: e.target.checked })
+                      }
+                      className="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 focus:ring-offset-0 transition-all duration-fast"
+                    />
+                    <span className="text-sm font-medium text-neutral-600">Required</span>
+                  </label>
+
+                  <button
+                    onClick={() => deleteQuestion(q.id)}
+                    className="ml-auto text-sm text-neutral-400 hover:text-danger-600 hover:bg-danger-50 px-3 py-1.5 rounded-lg transition-all duration-fast font-medium hover:shadow-sm"
+                    title="Delete question"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ))}
@@ -301,9 +393,12 @@ export default function FormEditorPage() {
       {/* Add Question Button */}
       <button
         onClick={addQuestion}
-        className="mt-6 w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 font-medium"
+        className="mt-6 w-full flex items-center justify-center gap-2 bg-neutral-50 text-neutral-600 px-6 py-4 rounded-xl hover:bg-neutral-100 hover:text-neutral-900 font-medium transition-all duration-fast border-2 border-dashed border-neutral-200 hover:border-neutral-300"
       >
-        + Add Question
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+        Add Question
       </button>
     </div>
   );
