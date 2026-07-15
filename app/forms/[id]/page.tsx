@@ -2,7 +2,6 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { RecordingButton } from '@/components/RecordingButton';
 import { AudioPlayer } from '@/components/AudioPlayer';
 
@@ -48,24 +47,14 @@ export default function PublicFormPage() {
 
   const fetchForm = async () => {
     try {
-      const { data: formData, error: formError } = await supabase
-        .from('forms')
-        .select('*')
-        .eq('id', formId)
-        .eq('is_published', true)
-        .single();
-
-      if (formError) throw formError;
+      const res = await fetch(`/api/forms/${formId}`);
+      if (!res.ok) throw new Error('Form not found');
+      
+      const formData = await res.json();
       setForm(formData);
 
-      const { data: questionsData, error: questionsError } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('form_id', formId)
-        .order('order_index', { ascending: true });
-
-      if (questionsError) throw questionsError;
-      setQuestions(questionsData || []);
+      const questionsData = formData.questions || [];
+      setQuestions(questionsData);
     } catch (error) {
       console.error('Failed to fetch form:', error);
       alert('Form not found or is not published');
@@ -78,18 +67,18 @@ export default function PublicFormPage() {
   const uploadAudio = async (blob: Blob): Promise<string> => {
     setUploadingAudio(true);
     try {
-      const fileName = `${formId}/${Date.now()}.webm`;
-      const { error } = await supabase.storage
-        .from('voiceforms-audio')
-        .upload(fileName, blob);
+      const formData = new FormData();
+      formData.append('file', blob);
+      formData.append('form_id', formId);
 
-      if (error) throw error;
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-      const { data: publicUrl } = supabase.storage
-        .from('voiceforms-audio')
-        .getPublicUrl(fileName);
-
-      return publicUrl.publicUrl;
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      return data.url;
     } catch (error) {
       console.error('Failed to upload audio:', error);
       throw error;
@@ -159,18 +148,7 @@ export default function PublicFormPage() {
 
     setSubmitting(true);
     try {
-      // Create response
-      const { data: responseData, error: responseError } = await supabase
-        .from('responses')
-        .insert({ form_id: formId })
-        .select()
-        .single();
-
-      if (responseError) throw responseError;
-
-      // Insert all answers
-      const answersToInsert = Array.from(answers.values()).map((answer) => ({
-        response_id: responseData.id,
+      const answersArray = Array.from(answers.values()).map((answer) => ({
         question_id: answer.questionId,
         answer_type: answer.answerType,
         text_content: answer.textContent || null,
@@ -178,13 +156,14 @@ export default function PublicFormPage() {
         duration_seconds: answer.duration || null,
       }));
 
-      const { error: answersError } = await supabase
-        .from('answers')
-        .insert(answersToInsert);
+      const res = await fetch(`/api/forms/${formId}/responses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: answersArray }),
+      });
 
-      if (answersError) throw answersError;
+      if (!res.ok) throw new Error('Failed to submit');
 
-      // Success
       alert('Thanks for your feedback!');
       router.push('/');
     } catch (error) {

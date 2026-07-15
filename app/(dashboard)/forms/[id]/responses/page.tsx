@@ -2,7 +2,6 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 
 interface Answer {
   id: string;
@@ -35,59 +34,21 @@ export default function ResponsesPage() {
 
   const fetchData = async () => {
     try {
-      // Get form title
-      const { data: formData } = await supabase
-        .from('forms')
-        .select('title')
-        .eq('id', formId)
-        .single();
+      // Fetch form title
+      const formRes = await fetch(`/api/forms/${formId}`, { credentials: 'include' });
+      if (formRes.ok) {
+        const formData = await formRes.json();
+        setFormTitle(formData.title);
+      }
 
-      if (formData) setFormTitle(formData.title);
-
-      // Get responses with answers
-      const { data: responsesData, error: responsesError } = await supabase
-        .from('responses')
-        .select('*')
-        .eq('form_id', formId)
-        .order('created_at', { ascending: false });
-
-      if (responsesError) throw responsesError;
-
-      // For each response, get the answers
-      const responsesWithAnswers = await Promise.all(
-        (responsesData || []).map(async (response) => {
-          const { data: answersData } = await supabase
-            .from('answers')
-            .select('*')
-            .eq('response_id', response.id)
-            .order('created_at', { ascending: true });
-
-          // Get question text for each answer
-          const answersWithText = await Promise.all(
-            (answersData || []).map(async (answer) => {
-              const { data: questionData } = await supabase
-                .from('questions')
-                .select('text')
-                .eq('id', answer.question_id)
-                .single();
-
-              return {
-                ...answer,
-                question_text: questionData?.text || 'Question',
-              };
-            })
-          );
-
-          return {
-            ...response,
-            answers: answersWithText,
-          };
-        })
-      );
-
-      setResponses(responsesWithAnswers);
+      // Fetch responses via API
+      const responsesRes = await fetch(`/api/forms/${formId}/responses`, { credentials: 'include' });
+      if (!responsesRes.ok) throw new Error('Failed to fetch responses');
+      
+      const responsesData = await responsesRes.json();
+      setResponses(responsesData);
     } catch (error) {
-      console.error('Failed to fetch responses:', error);
+      console.error('Failed to fetch data:', error);
     } finally {
       setLoading(false);
     }
@@ -97,12 +58,11 @@ export default function ResponsesPage() {
     if (!confirm('Delete this response?')) return;
 
     try {
-      const { error } = await supabase
-        .from('responses')
-        .delete()
-        .eq('id', responseId);
-
-      if (error) throw error;
+      const res = await fetch(`/api/forms/${formId}/responses/${responseId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to delete');
       setResponses(responses.filter(r => r.id !== responseId));
     } catch (error) {
       console.error('Failed to delete response:', error);
