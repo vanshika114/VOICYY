@@ -39,13 +39,16 @@ export async function GET(
       (responses || []).map(async (response) => {
         const { data: answers } = await supabaseServer
           .from('answers')
-          .select('*')
+          .select('*, questions (text)') 
           .eq('response_id', response.id)
           .order('created_at', { ascending: true });
 
         return {
           ...response,
-          answers: answers || [],
+          answers: (answers || []).map((answer: any) => ({
+            ...answer,
+            question_text: answer.questions?.text || '',
+          })),
         };
       })
     );
