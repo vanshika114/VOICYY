@@ -47,16 +47,33 @@ export default function PublicFormPage() {
 
   const fetchForm = async () => {
     try {
-      const res = await fetch(`/api/forms/${formId}`);
-      if (!res.ok) throw new Error('Form not found');
+      setLoading(true);
+      // Fetch form details
+      const formRes = await fetch(`/api/forms/${formId}`);
       
-      const formData = await res.json();
+      if (!formRes.ok) {
+        throw new Error('Failed to fetch form');
+      }
+
+      const formData = await formRes.json();
       setForm(formData);
 
-      const questionsData = formData.questions || [];
-      setQuestions(questionsData);
+      // Fetch questions separately
+      const questionsRes = await fetch(`/api/forms/${formId}/questions`);
+      if (!questionsRes.ok) {
+        throw new Error('Failed to fetch questions');
+      }
+      const questionsData = await questionsRes.json();
+
+
+      // Ensure it's always an array
+      setQuestions(Array.isArray(questionsData) ? questionsData : []);
     } catch (error) {
       console.error('Failed to fetch form:', error);
+
+      setForm(null);
+      setQuestions([]);
+
       alert('Form not found or is not published');
       router.push('/');
     } finally {
@@ -64,6 +81,7 @@ export default function PublicFormPage() {
     }
   };
 
+  
   const uploadAudio = async (blob: Blob): Promise<string> => {
     setUploadingAudio(true);
     try {

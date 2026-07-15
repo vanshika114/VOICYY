@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
     // Upload to Supabase Storage
     const { data, error } = await supabaseServer.storage
-      .from('voiceforms-audio')
+      .from('VOICYY AUDIOS')
       .upload(fileName, uint8Array, {
         contentType: 'audio/webm',
         upsert: false,
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     // Get public URL
     const { data: publicUrlData } = supabaseServer.storage
-      .from('voiceforms-audio')
+      .from('VOICYY AUDIOS')
       .getPublicUrl(fileName);
 
     return NextResponse.json(

@@ -1,12 +1,14 @@
-import { authMiddleware } from '@clerk/nextjs';
+import { authMiddleware, redirectToSignIn } from '@clerk/nextjs';
 
 export default authMiddleware({
-  publicRoutes: ['/', '/forms/:id'],
-  ignoredRoutes: ['/api/upload', '/api/forms/:id/responses'],
+  publicRoutes: [
+    '/',
+    '/forms/:id',
+    '/api/forms/:id',
+    '/api/upload',
+  ],
 });
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
 };
